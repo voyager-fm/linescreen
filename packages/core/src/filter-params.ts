@@ -3,7 +3,7 @@
  *
  * Pure module: no DOM dependencies, no side effects on import.
  * Owns the authoritative CONTROL_DEFINITIONS table (the single source of truth
- * for the 36 filter parameters), default values, normalization/clamping, size
+ * for the 41 filter parameters), default values, normalization/clamping, size
  * and GPU-limit checks, and preset (de)serialization.
  *
  * Erasable-syntax-only TypeScript: types are stripped by Node's native type
@@ -16,7 +16,7 @@
 const freeze = <T>(value: T): Readonly<T> => Object.freeze(value);
 
 /**
- * The normalized filter-parameter contract: exactly 36 keys.
+ * The normalized filter-parameter contract: exactly 41 keys.
  * Numbers for range controls, booleans for toggles, uppercase hex strings for
  * colors — derived from the CONTROL_DEFINITIONS truth and the unit tests.
  */
@@ -57,6 +57,11 @@ export type FilterParams = {
   negativeFringeTint: string;
   positiveFringeTint: string;
   rgbFringeEnabled: boolean;
+  inkEnabled: boolean;
+  inkColor: string;
+  inkFieldColor: string;
+  inkThreshold: number;
+  inkShadowThreshold: number;
 };
 
 /** Every filter-parameter key. */
@@ -69,7 +74,7 @@ export type BooleanFilterParamKey = { [K in keyof FilterParams]: FilterParams[K]
 export type ColorFilterParamKey = { [K in keyof FilterParams]: FilterParams[K] extends string ? K : never }[keyof FilterParams];
 
 /** Control group membership used by the app's UI groupings. */
-export type ControlGroup = 'block' | 'bloom' | 'ribs' | 'fringe';
+export type ControlGroup = 'block' | 'bloom' | 'ribs' | 'fringe' | 'ink';
 
 /** A numeric range control definition. */
 export interface RangeControlDefinition extends ControlDefinitionBase {
@@ -161,6 +166,7 @@ export const DEFAULT_FILTER_PARAMS: FilterParams = freeze({
   fringeRibEdgeLow: 0.35, fringeRibEdgeHigh: 1.20,
   fringeMinimumRibEdgeContribution: 0.15, blockFringeGain: 0.9,
   negativeFringeTint: '#00C7FF', positiveFringeTint: '#FF1475', rgbFringeEnabled: true,
+  inkEnabled: false, inkColor: '#000000', inkFieldColor: '#FFFFFF', inkThreshold: 0.95, inkShadowThreshold: 0,
 });
 
 /** App view state, kept separate from the filter parameters. */
@@ -193,6 +199,7 @@ export const CONTROL_DEFINITIONS: readonly ControlDefinition[] = freeze([
   range('luminanceLow', 0, 1, 0.001, 'Luminance low'), range('luminanceHigh', 0, 1, 0.001, 'Luminance high'), range('luminanceGamma', 0.1, 4, 0.05, 'Luminance gamma'), range('ribEdgeSoftness', 0, 4, 0.05, 'Rib edge softness', 'lu'), toggle('ribsEnabled', 'Ribs enabled'),
   range('fringeDistance', 0, 8, 0.05, 'Fringe distance', 'lu'), range('fringeProbeDistance', 1, 32, 0.25, 'Fringe probe distance', 'lu'), range('fringeIntensity', 0, 2, 0.01, 'Fringe intensity'), range('fringeTintMix', 0, 1, 0.01, 'Fringe tint mix'), range('fringeEdgeLow', 0, 1, 0.0001, 'Fringe edge low'), range('fringeEdgeHigh', 0, 1, 0.0001, 'Fringe edge high'), range('fringeRibEdgeLow', 0, 4, 0.05, 'Fringe rib-edge low', 'lu'), range('fringeRibEdgeHigh', 0, 4, 0.05, 'Fringe rib-edge high', 'lu'), range('fringeMinimumRibEdgeContribution', 0, 1, 0.01, 'Fringe minimum rib-edge contribution'), range('blockFringeGain', 0, 3, 0.05, 'Block fringe gain'),
   color('negativeFringeTint', 'Negative fringe tint'), color('positiveFringeTint', 'Positive fringe tint'), toggle('rgbFringeEnabled', 'RGB fringe enabled'),
+  toggle('inkEnabled', 'Ink output enabled'), color('inkColor', 'Ink color'), color('inkFieldColor', 'Ink field color'), range('inkThreshold', 0, 1, 0.001, 'Ink threshold'), range('inkShadowThreshold', 0, 1, 0.001, 'Ink shadow threshold'),
 ]);
 
 /** Key-widened view of the definitions map: lookups accept any candidate key string. */
@@ -260,7 +267,7 @@ function isRangeDefinition(definition: ControlDefinition | undefined): definitio
   return definition?.type === 'range';
 }
 
-/** Inputs (typed partial, untrusted record, or none) normalize into the full 36-key shape plus a mixed dynamic view. */
+/** Inputs (typed partial, untrusted record, or none) normalize into the full 41-key shape plus a mixed dynamic view. */
 export function normalizeFilterParams(params?: Record<string, unknown>): FilterParams & Record<string, number | boolean | string>;
 export function normalizeFilterParams(params: Record<string, unknown> = {}): Record<string, unknown> {
   const normalized = { ...DEFAULT_FILTER_PARAMS };
@@ -464,6 +471,8 @@ export function flipRowsInPlace(bytes: Uint8Array, width: number, height: number
 
 export const PRESET_STORAGE_KEY = 'coarse-grid.presets.v1';
 const VALID_KEYS: ReadonlySet<string> = new Set(CONTROL_DEFINITIONS.map((definition) => definition.key));
+/** Keys added after preset version 1 shipped: presets saved before them omit them and load with the defaults (ink off). */
+const KEYS_ADDED_AFTER_V1: ReadonlySet<string> = new Set(['inkEnabled', 'inkColor', 'inkFieldColor', 'inkThreshold', 'inkShadowThreshold']);
 
 export function sanitizePresetName(name: string): string {
   const trimmed = String(name).trim();
@@ -503,7 +512,7 @@ export function parsePreset(json: string): ParsedPreset {
     }
   }
   for (const key of VALID_KEYS) {
-    if (!(key in parsed.params)) {
+    if (!(key in parsed.params) && !KEYS_ADDED_AFTER_V1.has(key)) {
       throw new Error(`Missing parameter: ${key}`);
     }
   }

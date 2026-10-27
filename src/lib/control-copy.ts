@@ -3,16 +3,17 @@
  * Korean `CONTROL_COPY` in script.js:27-64.
  *
  * Object shape and keys are IDENTICAL to the vanilla map so the group mapping
- * (Block/Bloom/Ribs/Fringe) and the `resetGroup` key-set derivation are
+ * (Block/Bloom/Ribs/Fringe, plus the later Ink group) and the `resetGroup` key-set derivation are
  * unchanged: `key -> [group, label, help]` with the group as element [0].
  */
-export type ControlGroup = 'block' | 'bloom' | 'ribs' | 'fringe';
+export type ControlGroup = 'block' | 'bloom' | 'ribs' | 'fringe' | 'ink';
 
 export const GROUP_LABELS: Record<ControlGroup, string> = Object.freeze({
   block: 'Block',
   bloom: 'Bloom',
   ribs: 'Ribs',
   fringe: 'Fringe',
+  ink: 'Ink',
 });
 
 export const CONTROL_COPY: Record<string, readonly [ControlGroup, string, string]> = Object.freeze({
@@ -52,4 +53,9 @@ export const CONTROL_COPY: Record<string, readonly [ControlGroup, string, string
   negativeFringeTint: ['fringe', 'Negative fringe tint', 'Cyan-family tint applied to negative rib phase.'],
   positiveFringeTint: ['fringe', 'Positive fringe tint', 'Magenta-family tint applied to positive rib phase.'],
   rgbFringeEnabled: ['fringe', 'RGB fringe enabled', 'Turns the RGB separation and phase-tint step on or off.'],
+  inkEnabled: ['ink', 'Ink output enabled', 'Draws only the ribs, in one ink color on a flat field. Rib width carries the shading; bloom and RGB fringe are skipped.'],
+  inkColor: ['ink', 'Ink color', 'Color of the ribs in ink output.'],
+  inkFieldColor: ['ink', 'Ink field color', 'Flat background color behind the ribs in ink output.'],
+  inkThreshold: ['ink', 'Ink threshold', 'Linear luminance above which a block draws no ink, so light backgrounds stay plain field.'],
+  inkShadowThreshold: ['ink', 'Ink shadow threshold', 'Linear luminance below which a block draws no ink, so the deepest shadow opens into a field-colored band like reflected light. 0 turns it off.'],
 });

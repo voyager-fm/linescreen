@@ -194,7 +194,7 @@ test.describe.serial('GPU raster filter acceptance', () => {
 
     // Segmented tabs: exactly four tabs, Block selected by default, and an
     // inactive panel stays mounted but hidden until its tab activates it.
-    await expect(page.getByRole('tab')).toHaveCount(4);
+    await expect(page.getByRole('tab')).toHaveCount(5);
     await expect(page.getByRole('tab', { name: 'Block' })).toHaveAttribute('aria-selected', 'true');
     const bloomPanel = page.locator('#filter-panel-bloom');
     await expect(bloomPanel).toHaveCount(1);
@@ -358,6 +358,60 @@ test.describe.serial('GPU raster filter acceptance', () => {
     await expect(control(page, 'ribHighLuminanceDarkness')).toHaveValue('0.65');
     const resetExport = await exportDecodedPng(page);
     expect(Buffer.compare(resetExport.data, defaultExport.data), 'defaults after reset must match the current default export baseline').toBe(0);
+  });
+
+  test('ink output draws only ribs in one ink on a flat field and clears blocks above the threshold', async ({ page }) => {
+    await upload(page, createDirectionalProbeUpload(), { width: 64, height: 64 });
+    await setRange(page, 'blockPercent', 1);
+    // 64 lu is about 4.1 px on a 64 px short edge; ribs 2 px wide leave 2 px gaps.
+    await setRange(page, 'ribPitch', 64);
+    await setRange(page, 'ribLowLuminanceWidth', 32);
+    await setRange(page, 'ribHighLuminanceWidth', 32);
+    await setRange(page, 'ribEdgeSoftness', 0.05);
+    await activateFilterTab(page, 'Ink');
+    await expect(page.locator('#filter-panel-ink')).toBeVisible();
+    await control(page, 'inkEnabled').check();
+    await setColor(page, 'inkColor', '#102030');
+    await setColor(page, 'inkFieldColor', '#f0e0d0');
+    // The probe's yellow half sits near 0.74 linear luminance and its blue half near 0.09.
+    await setRange(page, 'inkThreshold', 0.5);
+    const inked = await exportDecodedPng(page);
+
+    const ink = [0x10, 0x20, 0x30];
+    const field = [0xf0, 0xe0, 0xd0];
+    let inkPixels = 0;
+    let fieldPixels = 0;
+    for (let y = 0; y < 64; y += 1) {
+      for (let x = 0; x < 64; x += 1) {
+        const [r, g, b, a] = pixel(inked, x, y);
+        expect(a).toBe(255);
+        // Every pixel lies between field and ink: the source colors never show through.
+        const t = (field[0] - r) / (field[0] - ink[0]);
+        expect(Math.abs(g - (field[1] + (ink[1] - field[1]) * t)), `ink mix at ${x},${y}`).toBeLessThanOrEqual(2);
+        expect(Math.abs(b - (field[2] + (ink[2] - field[2]) * t)), `ink mix at ${x},${y}`).toBeLessThanOrEqual(2);
+        if (x + y < 40) expect([r, g, b], `light block at ${x},${y} stays field`).toEqual(field);
+        if (x + y > 88) {
+          if (r === ink[0] && g === ink[1] && b === ink[2]) inkPixels += 1;
+          if (r === field[0] && g === field[1] && b === field[2]) fieldPixels += 1;
+        }
+      }
+    }
+    expect(inkPixels, 'dark blocks draw ink ribs').toBeGreaterThan(0);
+    expect(fieldPixels, 'dark blocks keep field gaps between ribs').toBeGreaterThan(0);
+
+    // A shadow threshold above the blue half's luminance opens the dark blocks into plain field.
+    await setRange(page, 'inkShadowThreshold', 0.2);
+    const opened = await exportDecodedPng(page);
+    for (let y = 0; y < 64; y += 1) {
+      for (let x = 0; x < 64; x += 1) {
+        if (x + y > 88) expect([...pixel(opened, x, y).subarray(0, 3)], `dark block at ${x},${y} opens to field`).toEqual(field);
+      }
+    }
+    await setRange(page, 'inkShadowThreshold', 0);
+
+    await control(page, 'inkEnabled').uncheck();
+    const plain = await exportDecodedPng(page);
+    expect(Buffer.compare(plain.data, inked.data), 'turning ink off restores the normal output').not.toBe(0);
   });
 
   test('snapshots rib darkness before yielding an export animation frame', async ({ page }) => {

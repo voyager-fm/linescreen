@@ -7,7 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import type { UseFilterEditorResult } from '@/hooks/useFilterEditor';
 import { CONTROL_COPY, GROUP_LABELS, type ControlGroup } from '@/lib/control-copy';
 
-const GROUPS: ControlGroup[] = ['block', 'bloom', 'ribs', 'fringe'];
+const GROUPS: ControlGroup[] = ['block', 'bloom', 'ribs', 'fringe', 'ink'];
 
 /**
  * The 15 Ribs controls split into two nested tab sections; every Ribs key is
@@ -76,12 +76,12 @@ interface ControlsPanelProps {
 }
 
 /**
- * Renders all 36 CONTROL_DEFINITIONS grouped into four `fieldset.filter-group`
- * fieldsets (Block / Bloom / Ribs / Fringe), each with an English `.group-reset`
+ * Renders all 41 CONTROL_DEFINITIONS grouped into five `fieldset.filter-group`
+ * fieldsets (Block / Bloom / Ribs / Fringe / Ink), each with an English `.group-reset`
  * button. Every definition renders one native input via ControlRow; the help
  * buttons stay enabled regardless of `disabled`.
  *
- * The four fieldsets sit behind a segmented top-level tab row (WAI-ARIA tabs,
+ * The five fieldsets sit behind a segmented top-level tab row (WAI-ARIA tabs,
  * ids `filter-tab-<group>` / `filter-panel-<group>`); the Ribs fieldset nests a
  * second tab row (`filter-tab-ribs-<section>` / `filter-panel-ribs-<section>`)
  * splitting its 15 controls into Geometry and Response. Every group and section
@@ -116,7 +116,7 @@ export default function ControlsPanel({ editor, disabled }: ControlsPanelProps) 
       <div
         role="tablist"
         aria-label="Filter control groups"
-        className="grid grid-cols-4 gap-1"
+        className="grid grid-cols-5 gap-1"
         onKeyDown={handleTablistKeyDown(GROUPS, activeGroup, setActiveGroup)}
       >
         {GROUPS.map((group) => (

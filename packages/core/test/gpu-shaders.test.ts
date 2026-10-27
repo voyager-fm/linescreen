@@ -106,7 +106,7 @@ test('POST_SHADER retains bloom, rib-center, and fringe equation references', ()
   assert.match(post, /effect \+= \(localBloom - effect\) \* highlight \* bloom;/);
   assert.match(post, /vec2 ribCenterPoint = p - ribNormal \* signedRibPhase;/);
   assert.match(post, /vec2 ribCenterBlock = floor\(ribCenterPoint \/ blockSize\);/);
-  assert.match(post, /vec3 ribBlockColor = sampleBlock\(ribCenterBlock\)\.rgb;/);
+  assert.match(post, /vec4 ribBlockSample = sampleBlock\(ribCenterBlock\);\s+vec3 ribBlockColor = ribBlockSample\.rgb;/);
   assert.match(post, /float ribLuminance = luminance\(ribBlockColor\);/);
   assert.match(post, /ribWidth \* 0\.5 - ribEdgeSoftness,[\s\S]*?ribWidth \* 0\.5 \+ ribEdgeSoftness/);
   assert.match(post, /vec3 gradientDelta = abs\(probePlus - probeMinus\);/);
@@ -247,4 +247,16 @@ test('HSV value and saturation scale uniforms are present and used', () => {
   assert.match(post, /\bribHighLuminanceSaturationScale\b/);
   assert.match(post, /ribHsv\.y \* ribSatScale/);
   assert.match(post, /ribHsv\.z \* ribValueScale/);
+});
+
+test('post shader draws ink output from the rib mask alone', () => {
+  for (const uniform of ['uniform bool inkEnabled;', 'uniform vec3 inkColor;', 'uniform vec3 inkFieldColor;', 'uniform float inkThreshold;', 'uniform float inkShadowThreshold;']) {
+    assert.ok(post.includes(uniform), `post shader must declare ${uniform}`);
+  }
+  assert.match(post, /float inkCoverage = ribMask \* enabled \* step\(ribLuminance, inkThreshold\) \* step\(inkShadowThreshold, ribLuminance\) \* ribBlockSample\.a;/);
+  assert.match(post, /effect = mix\(inkFieldColor, inkColor, inkCoverage\);/);
+  // Ink output is two-tone: the RGB fringe pass is skipped while it is on.
+  assert.match(post, /\} else if \(rgbFringeEnabled\) \{/);
+  assert.match(engineSource, /inkColor: hexToLinearRgb\(pixelParams\.inkColor\)/);
+  assert.match(engineSource, /inkFieldColor: hexToLinearRgb\(pixelParams\.inkFieldColor\)/);
 });
