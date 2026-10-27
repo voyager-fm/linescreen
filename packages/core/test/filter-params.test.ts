@@ -6,7 +6,7 @@ import {
   flipRowsInPlace, getExportDimensions,
   getExportFilename, getNominalBlockTaps, hexToLinearRgb, intersectGpuLimits,
   linearRgbToHex, normalizeControlEdit, normalizeFilterParams, sanitizeStem,
-  parsePreset, serializePreset, sanitizePresetName, presetFilename, PRESET_STORAGE_KEY, LEGACY_PRESET_STORAGE_KEY,
+  parsePreset, serializePreset, sanitizePresetName, presetFilename, PRESET_STORAGE_KEY,
   srgbChannelToLinear, validateExportLimits, validateInputLimits, validateRenderDimensions,
 } from '../src/filter-params.ts';
 
@@ -200,7 +200,6 @@ test('readback row flip mutates once and handles asymmetric rows', () => {
 
 test('PRESET_STORAGE_KEY is correct', () => {
   assert.equal(PRESET_STORAGE_KEY, 'linescreen.presets.v1');
-  assert.equal(LEGACY_PRESET_STORAGE_KEY, 'coarse-grid.presets.v1');
 });
 
 test('sanitizePresetName and presetFilename work correctly', () => {
@@ -247,14 +246,6 @@ test('parsePreset rejects version 2', () => {
 test('parsePreset rejects unknown schema', () => {
   const json = JSON.stringify({ schema: 'wrong', version: 1, name: 'Test', params: {} });
   assert.throws(() => parsePreset(json), /Invalid schema/);
-});
-
-test('parsePreset accepts preset files saved under the legacy coarse-grid schema', () => {
-  const params = Object.fromEntries(CONTROL_DEFINITIONS.map((d) => [d.key, d.defaultValue]));
-  const json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: 'Legacy Look', params });
-  const parsed = parsePreset(json);
-  assert.equal(parsed.name, 'Legacy Look');
-  assert.equal(parsed.params.blockPercent, DEFAULT_FILTER_PARAMS.blockPercent);
 });
 
 test('serializePreset writes the linescreen schema marker', () => {

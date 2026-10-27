@@ -54,7 +54,7 @@ export type {
 export type { EditHistoryStep, EditHistoryAPI } from './edit-history.ts';
 
 // Preset store.
-export type { PresetStorage, PresetMigrationStorage, PresetMutationResult, PresetLoadResult, SavePresetOptions } from './preset-store.ts';
+export type { PresetStorage, PresetMutationResult, PresetLoadResult, SavePresetOptions } from './preset-store.ts';
 
 // GPU renderer: error-code union plus option/handle types.
 export type {
