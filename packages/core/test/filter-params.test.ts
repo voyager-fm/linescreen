@@ -29,7 +29,7 @@ test('defaults, controls, and export scales match the approved contract', () => 
   assert.ok('ribHighLuminanceValueScale' in DEFAULT_FILTER_PARAMS);
   assert.ok('ribLowLuminanceSaturationScale' in DEFAULT_FILTER_PARAMS);
   assert.ok('ribHighLuminanceSaturationScale' in DEFAULT_FILTER_PARAMS);
-  assert.equal(CONTROL_DEFINITIONS.length, 36);
+  assert.equal(CONTROL_DEFINITIONS.length, 41);
   assert.deepEqual(DEFAULT_FILTER_PARAMS, {
     blockPercent: 5.6, posterization: 0.83, contrast: 18, contrastEnabled: true,
     bloom: 0.12, bloomEnabled: true, bloomHighlightLow: 0.35, bloomHighlightHigh: 0.82,
@@ -44,11 +44,13 @@ test('defaults, controls, and export scales match the approved contract', () => 
     fringeRibEdgeLow: 0.35, fringeRibEdgeHigh: 1.20,
     fringeMinimumRibEdgeContribution: 0.15, blockFringeGain: 0.9,
     negativeFringeTint: '#00C7FF', positiveFringeTint: '#FF1475', rgbFringeEnabled: true,
+    inkEnabled: false, inkColor: '#000000', inkFieldColor: '#FFFFFF', inkThreshold: 0.95, inkShadowThreshold: 0,
   });
   assert.deepEqual(normalizeFilterParams(), DEFAULT_FILTER_PARAMS);
   assert.deepEqual(Object.keys(DEFAULT_FILTER_PARAMS), CONTROL_DEFINITIONS.map(({ key }) => key));
   assert.deepEqual(CONTROL_DEFINITIONS.filter(({ type }) => type === 'color').map(({ key, defaultValue }) => [key, defaultValue]), [
     ['negativeFringeTint', '#00C7FF'], ['positiveFringeTint', '#FF1475'],
+    ['inkColor', '#000000'], ['inkFieldColor', '#FFFFFF'],
   ]);
   assert.deepEqual(CONTROL_DEFINITIONS.filter(({ type }) => type === 'range').map(({ key, min, max, step }) => [key, min, max, step]), [
     ['blockPercent', 1, 50, 0.1], ['posterization', 0, 1, 0.01], ['contrast', -100, 100, 1], ['bloom', 0, 1, 0.01],
@@ -61,6 +63,7 @@ test('defaults, controls, and export scales match the approved contract', () => 
     ['fringeDistance', 0, 8, 0.05], ['fringeProbeDistance', 1, 32, 0.25], ['fringeIntensity', 0, 2, 0.01], ['fringeTintMix', 0, 1, 0.01],
     ['fringeEdgeLow', 0, 1, 0.0001], ['fringeEdgeHigh', 0, 1, 0.0001], ['fringeRibEdgeLow', 0, 4, 0.05], ['fringeRibEdgeHigh', 0, 4, 0.05],
     ['fringeMinimumRibEdgeContribution', 0, 1, 0.01], ['blockFringeGain', 0, 3, 0.05],
+    ['inkThreshold', 0, 1, 0.001], ['inkShadowThreshold', 0, 1, 0.001],
   ]);
   for (const definition of CONTROL_DEFINITIONS) {
     if (definition.type === 'range') assert.ok(DEFAULT_FILTER_PARAMS[definition.key] >= definition.min && DEFAULT_FILTER_PARAMS[definition.key] <= definition.max, definition.key);
@@ -257,6 +260,27 @@ test('parsePreset rejects missing posterization', () => {
   delete params.posterization;
   const json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: 'Test', params });
   assert.throws(() => parsePreset(json), /Missing parameter: posterization/);
+});
+
+test('parsePreset loads a version-1 preset saved before the ink keys with ink off', () => {
+  const params = Object.fromEntries(CONTROL_DEFINITIONS.map((d) => [d.key, d.defaultValue]));
+  for (const key of ['inkEnabled', 'inkColor', 'inkFieldColor', 'inkThreshold', 'inkShadowThreshold']) delete params[key];
+  const json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: 'Before ink', params });
+  const { params: loaded } = parsePreset(json);
+  assert.equal(loaded.inkEnabled, false);
+  assert.equal(loaded.inkColor, '#000000');
+  assert.equal(loaded.inkFieldColor, '#FFFFFF');
+  assert.equal(loaded.inkThreshold, 0.95);
+  assert.equal(loaded.inkShadowThreshold, 0);
+});
+
+test('normalizeFilterParams normalizes ink colors and clamps the ink threshold', () => {
+  const params = normalizeFilterParams({ inkEnabled: 'true', inkColor: '#f28a1c', inkFieldColor: 'nope', inkThreshold: 2, inkShadowThreshold: -1 });
+  assert.equal(params.inkEnabled, true);
+  assert.equal(params.inkColor, '#F28A1C');
+  assert.equal(params.inkFieldColor, '#FFFFFF');
+  assert.equal(params.inkThreshold, 1);
+  assert.equal(params.inkShadowThreshold, 0);
 });
 
 test('parsePreset rejects invalid name (empty, too long)', () => {

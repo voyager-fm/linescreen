@@ -113,6 +113,11 @@ uniform float ribLowLuminanceValueScale;
 uniform float ribHighLuminanceValueScale;
 uniform float ribLowLuminanceSaturationScale;
 uniform float ribHighLuminanceSaturationScale;
+uniform bool inkEnabled;
+uniform vec3 inkColor;
+uniform vec3 inkFieldColor;
+uniform float inkThreshold;
+uniform float inkShadowThreshold;
 
 out vec4 outColor;
 
@@ -201,7 +206,8 @@ void main() {
   float ribDistance = abs(signedRibPhase);
   vec2 ribCenterPoint = p - ribNormal * signedRibPhase;
   vec2 ribCenterBlock = floor(ribCenterPoint / blockSize);
-  vec3 ribBlockColor = sampleBlock(ribCenterBlock).rgb;
+  vec4 ribBlockSample = sampleBlock(ribCenterBlock);
+  vec3 ribBlockColor = ribBlockSample.rgb;
   float ribLuminance = luminance(ribBlockColor);
   float luminanceResponse = pow(smoothstep(ribLuminanceLow, ribLuminanceHigh, ribLuminance), ribLuminanceGamma);
   float ribWidth = mix(ribLowLuminanceWidth, ribHighLuminanceWidth, luminanceResponse);
@@ -217,7 +223,14 @@ void main() {
   float enabled = ribsEnabled ? 1.0 : 0.0;
   effect = mix(effect, ribColor, ribMask * ribDarkness * enabled);
 
-  if (rgbFringeEnabled) {
+  if (inkEnabled) {
+    // Two-tone output: the ribs alone become ink on a flat field, so rib width carries the shading. Ribs whose
+    // block is lighter than inkThreshold stay field, which clears light areas; a rib centered off the image or on
+    // transparent pixels has no block to draw. Blocks darker than inkShadowThreshold draw no ink either, so the
+    // deepest shadow opens into a field-colored band inside the object's outline, like reflected light.
+    float inkCoverage = ribMask * enabled * step(ribLuminance, inkThreshold) * step(inkShadowThreshold, ribLuminance) * ribBlockSample.a;
+    effect = mix(inkFieldColor, inkColor, inkCoverage);
+  } else if (rgbFringeEnabled) {
     vec2 fringeDirection = ribNormal;
     vec3 sourceMinus = sampleScene(p - fringeDirection * fringeDistance);
     vec3 sourcePlus = sampleScene(p + fringeDirection * fringeDistance);

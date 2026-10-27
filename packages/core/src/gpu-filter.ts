@@ -231,6 +231,11 @@ interface CommandProps {
   ribHighLuminanceValueScale: number;
   ribLowLuminanceSaturationScale: number;
   ribHighLuminanceSaturationScale: number;
+  inkEnabled: boolean;
+  inkColor: number[];
+  inkFieldColor: number[];
+  inkThreshold: number;
+  inkShadowThreshold: number;
   previewBackground: number[];
   showOriginal: boolean;
 }
@@ -443,6 +448,7 @@ export function createGpuFilter(options: GpuFilterOptions): GpuFilterRenderer {
         sceneTexture: regl.prop('sceneTexture'), blocksTexture: regl.prop('blocksTexture'), sceneResolution: regl.prop('sceneResolution'), blockResolution: regl.prop('blockResolution'), blockSize: regl.prop('blockSize'),
         bloom: regl.prop('bloom'), bloomEnabled: regl.prop('bloomEnabled'), bloomHighlightLow: regl.prop('bloomHighlightLow'), bloomHighlightHigh: regl.prop('bloomHighlightHigh'), ribAngle: regl.prop('ribAngle'), ribPitch: regl.prop('ribPitch'), ribLowLuminanceWidth: regl.prop('ribLowLuminanceWidth'), ribHighLuminanceWidth: regl.prop('ribHighLuminanceWidth'), ribLowLuminanceDarkness: regl.prop('ribLowLuminanceDarkness'), ribHighLuminanceDarkness: regl.prop('ribHighLuminanceDarkness'), ribLuminanceLow: regl.prop('luminanceLow'), ribLuminanceHigh: regl.prop('luminanceHigh'), ribLuminanceGamma: regl.prop('luminanceGamma'), ribEdgeSoftness: regl.prop('ribEdgeSoftness'), ribsEnabled: regl.prop('ribsEnabled'), fringeDistance: regl.prop('fringeDistance'), fringeProbeDistance: regl.prop('fringeProbeDistance'), fringeIntensity: regl.prop('fringeIntensity'), fringeTintMix: regl.prop('fringeTintMix'), fringeEdgeLow: regl.prop('fringeEdgeLow'), fringeEdgeHigh: regl.prop('fringeEdgeHigh'), fringeRibEdgeLow: regl.prop('fringeRibEdgeLow'), fringeRibEdgeHigh: regl.prop('fringeRibEdgeHigh'), fringeMinimumRibEdgeContribution: regl.prop('fringeMinimumRibEdgeContribution'), blockFringeGain: regl.prop('blockFringeGain'), negativeFringeTint: regl.prop('negativeFringeTint'), positiveFringeTint: regl.prop('positiveFringeTint'), rgbFringeEnabled: regl.prop('rgbFringeEnabled'),
         contrast: regl.prop('contrast'), contrastEnabled: regl.prop('contrastEnabled'), posterization: regl.prop('posterization'), ribLowLuminanceValueScale: regl.prop('ribLowLuminanceValueScale'), ribHighLuminanceValueScale: regl.prop('ribHighLuminanceValueScale'), ribLowLuminanceSaturationScale: regl.prop('ribLowLuminanceSaturationScale'), ribHighLuminanceSaturationScale: regl.prop('ribHighLuminanceSaturationScale'),
+        inkEnabled: regl.prop('inkEnabled'), inkColor: regl.prop('inkColor'), inkFieldColor: regl.prop('inkFieldColor'), inkThreshold: regl.prop('inkThreshold'), inkShadowThreshold: regl.prop('inkShadowThreshold'),
       } });
       next.blit = regl<createREGL.Uniforms, createREGL.Attributes, CommandProps>({ ...commonConfig(DISPLAY_SHADER), uniforms: { sourceTexture: regl.prop('sourceTexture'), resultTexture: regl.prop('resultTexture'), previewBackground: regl.prop('previewBackground'), showOriginal: regl.prop('showOriginal') } });
     } catch (cause) {
@@ -506,7 +512,7 @@ export function createGpuFilter(options: GpuFilterOptions): GpuFilterRenderer {
     commands.reduce({ framebuffer: bundle.blocks.framebuffer, viewport: { x: 0, y: 0, width: bundle.blocks.width, height: bundle.blocks.height }, sceneTexture: bundle.scene.texture, tileSumTexture: bundle.tileSum?.texture ?? bundle.scene.texture, sceneResolution: [bundle.width, bundle.height], blockSize: bundle.blockSize });
     // Convert logical-unit spatial params to target pixels before passing to shader.
     const pixelParams = convertLogicalToTargetPixels(params, bundle.width, bundle.height);
-    commands.post({ framebuffer: postTarget.framebuffer, viewport: sceneViewport, sceneTexture: bundle.scene.texture, blocksTexture: bundle.blocks.texture, sceneResolution: [bundle.width, bundle.height], blockResolution: [bundle.blocks.width, bundle.blocks.height], blockSize: bundle.blockSize, ...pixelParams, negativeFringeTint: hexToLinearRgb(pixelParams.negativeFringeTint), positiveFringeTint: hexToLinearRgb(pixelParams.positiveFringeTint) });
+    commands.post({ framebuffer: postTarget.framebuffer, viewport: sceneViewport, sceneTexture: bundle.scene.texture, blocksTexture: bundle.blocks.texture, sceneResolution: [bundle.width, bundle.height], blockResolution: [bundle.blocks.width, bundle.blocks.height], blockSize: bundle.blockSize, ...pixelParams, negativeFringeTint: hexToLinearRgb(pixelParams.negativeFringeTint), positiveFringeTint: hexToLinearRgb(pixelParams.positiveFringeTint), inkColor: hexToLinearRgb(pixelParams.inkColor), inkFieldColor: hexToLinearRgb(pixelParams.inkFieldColor) });
   }
 
   /** Transactionally replaces the retained source. Pixels are copied so restoration is independent of callers. When `exportScale` is provided, the preview bundle is created at the export target dimensions instead of source dimensions. */
