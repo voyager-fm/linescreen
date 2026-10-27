@@ -1,5 +1,5 @@
 /**
- * Captures README screenshots of the Coarse Grid app.
+ * Captures README screenshots of the Linescreen app.
  *
  * Builds (npm run build), previews on 127.0.0.1:4173, uploads a fixture from
  * test/browser/fixtures.js, lets the default render settle, and writes:

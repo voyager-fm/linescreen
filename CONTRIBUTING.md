@@ -1,4 +1,4 @@
-# Contributing to Coarse Grid
+# Contributing to Linescreen
 
 Thanks for your interest in contributing! This guide covers how to set up a
 local dev environment, run the checks, and what we expect from pull requests.
@@ -29,7 +29,7 @@ The repo is a pnpm workspaces monorepo:
 - **Root app** (`index.html`, `src/`, Vite build) — the React UI: file
   upload, expert controls, presets, edit history, preview workspace, and
   PNG download.
-- **`packages/core`** (`@voyager-fm/coarse-grid-core`) — the reusable GPU renderer,
+- **`packages/core`** (`@voyager-fm/linescreen-core`) — the reusable GPU renderer,
   filter params, edit history, and preset store published as a package.
 
 ## Commands
@@ -58,13 +58,13 @@ and `pnpm run test:browser:webkit`.
 
 ## TypeScript
 
-The engine package `packages/core` (`@voyager-fm/coarse-grid-core`) is written in
+The engine package `packages/core` (`@voyager-fm/linescreen-core`) is written in
 TypeScript and ships its `.ts` sources directly. There is no build step:
 Node.js >= 22.18 (the `engines` requirement in both the root and core
 `package.json`) executes TypeScript natively by stripping type annotations at
 load time, so the package's `main` and `exports` point straight at
 `./src/index.ts`. Publishing is the one place a build happens:
-`pnpm --filter @voyager-fm/coarse-grid-core build` compiles the `dist/`
+`pnpm --filter @voyager-fm/linescreen-core build` compiles the `dist/`
 output, and the package's `publishConfig` swaps the packed manifest's entry
 points over to it when the package is published to GitHub Packages.
 

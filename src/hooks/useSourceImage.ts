@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 
-import { GpuFilterError, normalizeFilterParams, sanitizeStem } from '@voyager-fm/coarse-grid-core';
+import { GpuFilterError, normalizeFilterParams, sanitizeStem } from '@voyager-fm/linescreen-core';
 
 import type { PreviewStatus } from '@/components/PreviewWorkspace';
 import { gpuErrorMessage, type RendererHandle } from '@/hooks/useRenderer';

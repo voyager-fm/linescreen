@@ -1,16 +1,16 @@
-# Coarse Grid
+# Linescreen
 
-Coarse Grid turns a photo into a coarse block-grid raster artwork in your browser, on the GPU. Drop in a PNG, JPEG, or WebP, tune the block, bloom, ribs, and RGB fringe controls, and export a transparent PNG. Everything runs locally in your browser through a WebGL2 pipeline backed by `regl`; no image ever leaves your machine.
+Linescreen turns a photo into a coarse block-grid raster artwork in your browser, on the GPU. Drop in a PNG, JPEG, or WebP, tune the block, bloom, ribs, and RGB fringe controls, and export a transparent PNG. Everything runs locally in your browser through a WebGL2 pipeline backed by `regl`; no image ever leaves your machine.
 
-This tool is an homage to **Jacqueline Casey**, the pioneering Swiss-style graphic designer at MIT, and to her 1979 recruitment poster for MIT Lincoln Laboratory. That poster reduces a crowd of faces to a bold grid of coarse blocks, finding rhythm and motion in geometry. Coarse Grid borrows the same instinct: take a photograph and rebuild it as a grid of weighted blocks, lit and textured with luminance-responsive ribs and RGB fringe. You can see the original poster that inspired this project [here](https://www.instagram.com/p/DJ-BDYSIspE/).
+This tool is an homage to **Jacqueline Casey**, the pioneering Swiss-style graphic designer at MIT, and to her 1979 recruitment poster for MIT Lincoln Laboratory. That poster reduces a crowd of faces to a bold grid of coarse blocks, finding rhythm and motion in geometry. Linescreen borrows the same instinct: take a photograph and rebuild it as a grid of weighted blocks, lit and textured with luminance-responsive ribs and RGB fringe. You can see the original poster that inspired this project [here](https://www.instagram.com/p/DJ-BDYSIspE/).
 
-![Coarse Grid hero, a photo rebuilt as a coarse block grid in the browser](docs/img/hero.png)
+![Linescreen hero, a photo rebuilt as a coarse block grid in the browser](docs/img/hero.png)
 
 ## Screenshots
 
 The hero screenshot above shows the desktop workbench at 1440×900 with a source image rendered through the default filter. The mobile view below shows the expert controls panel at a 375px-wide viewport.
 
-![Coarse Grid expert controls on a narrow mobile viewport](docs/img/controls.png)
+![Linescreen expert controls on a narrow mobile viewport](docs/img/controls.png)
 
 ## Quick start
 
@@ -33,7 +33,7 @@ Opening `index.html` directly over `file://` is not supported. Serve the app thr
 
 ## Install the core package
 
-The GPU engine behind Coarse Grid is published as `@voyager-fm/coarse-grid-core` on GitHub Packages, so you can reuse the renderer in your own project without cloning this monorepo. Prefer to see it running first? The full app is live on GitHub Pages at [https://voyager-fm.github.io/coarse-grid/](https://voyager-fm.github.io/coarse-grid/).
+The GPU engine behind Linescreen is published as `@voyager-fm/linescreen-core` on GitHub Packages, so you can reuse the renderer in your own project without cloning this monorepo. Prefer to see it running first? The full app is live on GitHub Pages at [https://voyager-fm.github.io/linescreen/](https://voyager-fm.github.io/linescreen/).
 
 GitHub Packages requires authentication even for public packages. Create a classic personal access token with the `read:packages` scope, or rely on the built-in `GITHUB_TOKEN` in CI. Then point the `@voyager-fm` scope at the registry in your project's `.npmrc`:
 
@@ -45,7 +45,7 @@ GitHub Packages requires authentication even for public packages. Create a class
 Install the package:
 
 ```sh
-npm install @voyager-fm/coarse-grid-core
+npm install @voyager-fm/linescreen-core
 ```
 
 ## Usage
@@ -170,10 +170,10 @@ Image files and pixels are never uploaded or transmitted to an external server. 
 
 ## Workspace layout
 
-Coarse Grid is a pnpm workspaces monorepo with two parts:
+Linescreen is a pnpm workspaces monorepo with two parts:
 
 - **Root app** (`index.html`, `src/`, Vite build): the React playground. It owns the file upload, the expert-controls editor, presets, the edit-history surface, the preview workspace, and PNG download.
-- **`packages/core`** (`@voyager-fm/coarse-grid-core`): the reusable GPU renderer and supporting modules. It exposes the GPU renderer, filter parameter definitions and normalization, edit history, and the preset store, with no UI or DOM of its own.
+- **`packages/core`** (`@voyager-fm/linescreen-core`): the reusable GPU renderer and supporting modules. It exposes the GPU renderer, filter parameter definitions and normalization, edit history, and the preset store, with no UI or DOM of its own.
 
 The core package is organized into six modules:
 
@@ -186,11 +186,11 @@ The core package is organized into six modules:
 | `edit-history.ts` | Immutable edit history (100-state limit, undo/redo) |
 | `preset-store.ts` | LocalStorage preset save/load/export/import |
 
-The React app imports this surface from `@voyager-fm/coarse-grid-core` through the workspace symlink, keeping all GPU and parameter logic out of the UI layer.
+The React app imports this surface from `@voyager-fm/linescreen-core` through the workspace symlink, keeping all GPU and parameter logic out of the UI layer.
 
 ## Development
 
-The repo is a pnpm workspaces monorepo. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and contribution guidance. The engine package `@voyager-fm/coarse-grid-core` is TypeScript executed natively by Node during development; `pnpm --filter @voyager-fm/coarse-grid-core build` produces its `dist/` build locally, which is what gets packaged when the core package is published.
+The repo is a pnpm workspaces monorepo. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and contribution guidance. The engine package `@voyager-fm/linescreen-core` is TypeScript executed natively by Node during development; `pnpm --filter @voyager-fm/linescreen-core build` produces its `dist/` build locally, which is what gets packaged when the core package is published.
 
 ```sh
 pnpm run check
@@ -210,7 +210,7 @@ CPU filtering and CPU fallback paths, Grid, Dither, legacy Scanline, palettes an
 
 ## License
 
-Coarse Grid is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+Linescreen is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU General Public License](LICENSE) for details.
 

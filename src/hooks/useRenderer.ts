@@ -6,7 +6,7 @@ import {
   GpuFilterError,
   getExportFilename,
   normalizeFilterParams,
-} from '@voyager-fm/coarse-grid-core';
+} from '@voyager-fm/linescreen-core';
 
 import type { PreviewStatus } from '@/components/PreviewWorkspace';
 import type { RendererCallbacks } from '@/App';

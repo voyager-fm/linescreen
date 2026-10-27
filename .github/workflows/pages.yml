@@ -40,7 +40,7 @@ jobs:
       - name: Build
         run: pnpm run build
         env:
-          VITE_BASE: '/coarse-grid/'
+          VITE_BASE: '/linescreen/'
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
