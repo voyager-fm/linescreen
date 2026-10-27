@@ -6,7 +6,7 @@ import {
   flipRowsInPlace, getExportDimensions,
   getExportFilename, getNominalBlockTaps, hexToLinearRgb, intersectGpuLimits,
   linearRgbToHex, normalizeControlEdit, normalizeFilterParams, sanitizeStem,
-  parsePreset, serializePreset, sanitizePresetName, presetFilename, PRESET_STORAGE_KEY,
+  parsePreset, serializePreset, sanitizePresetName, presetFilename, PRESET_STORAGE_KEY, LEGACY_PRESET_STORAGE_KEY,
   srgbChannelToLinear, validateExportLimits, validateInputLimits, validateRenderDimensions,
 } from '../src/filter-params.ts';
 
@@ -199,15 +199,16 @@ test('readback row flip mutates once and handles asymmetric rows', () => {
 });
 
 test('PRESET_STORAGE_KEY is correct', () => {
-  assert.equal(PRESET_STORAGE_KEY, 'coarse-grid.presets.v1');
+  assert.equal(PRESET_STORAGE_KEY, 'linescreen.presets.v1');
+  assert.equal(LEGACY_PRESET_STORAGE_KEY, 'coarse-grid.presets.v1');
 });
 
 test('sanitizePresetName and presetFilename work correctly', () => {
   assert.equal(sanitizePresetName('  My Preset!  '), 'My_Preset_');
   assert.equal(sanitizePresetName('hello-world'), 'hello-world');
   assert.equal(sanitizePresetName(''), 'unnamed');
-  assert.equal(presetFilename('My Preset'), 'My_Preset.coarse-grid-preset.json');
-  assert.equal(presetFilename('hello'), 'hello.coarse-grid-preset.json');
+  assert.equal(presetFilename('My Preset'), 'My_Preset.linescreen-preset.json');
+  assert.equal(presetFilename('hello'), 'hello.linescreen-preset.json');
 });
 
 test('preset round-trip produces canonical JSON', () => {
@@ -239,7 +240,7 @@ test('preset serialized JSON contains no removed keys', () => {
 });
 
 test('parsePreset rejects version 2', () => {
-  const json = JSON.stringify({ schema: 'coarse-grid/preset', version: 2, name: 'Test', params: {} });
+  const json = JSON.stringify({ schema: 'linescreen/preset', version: 2, name: 'Test', params: {} });
   assert.throws(() => parsePreset(json), /Invalid version/);
 });
 
@@ -248,24 +249,38 @@ test('parsePreset rejects unknown schema', () => {
   assert.throws(() => parsePreset(json), /Invalid schema/);
 });
 
+test('parsePreset accepts preset files saved under the legacy coarse-grid schema', () => {
+  const params = Object.fromEntries(CONTROL_DEFINITIONS.map((d) => [d.key, d.defaultValue]));
+  const json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: 'Legacy Look', params });
+  const parsed = parsePreset(json);
+  assert.equal(parsed.name, 'Legacy Look');
+  assert.equal(parsed.params.blockPercent, DEFAULT_FILTER_PARAMS.blockPercent);
+});
+
+test('serializePreset writes the linescreen schema marker', () => {
+  const json = serializePreset('Test', DEFAULT_FILTER_PARAMS);
+  assert.ok(json.includes('"schema": "linescreen/preset"'));
+  assert.ok(!json.includes('coarse-grid'));
+});
+
 test('parsePreset rejects unknown key strength', () => {
   const params = Object.fromEntries(CONTROL_DEFINITIONS.map((d) => [d.key, d.defaultValue]));
   params.strength = 0.5;
-  const json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: 'Test', params });
+  const json = JSON.stringify({ schema: 'linescreen/preset', version: 1, name: 'Test', params });
   assert.throws(() => parsePreset(json), /Unknown parameter: strength/);
 });
 
 test('parsePreset rejects missing posterization', () => {
   const params = Object.fromEntries(CONTROL_DEFINITIONS.map((d) => [d.key, d.defaultValue]));
   delete params.posterization;
-  const json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: 'Test', params });
+  const json = JSON.stringify({ schema: 'linescreen/preset', version: 1, name: 'Test', params });
   assert.throws(() => parsePreset(json), /Missing parameter: posterization/);
 });
 
 test('parsePreset loads a version-1 preset saved before the ink keys with ink off', () => {
   const params = Object.fromEntries(CONTROL_DEFINITIONS.map((d) => [d.key, d.defaultValue]));
   for (const key of ['inkEnabled', 'inkColor', 'inkFieldColor', 'inkThreshold', 'inkShadowThreshold']) delete params[key];
-  const json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: 'Before ink', params });
+  const json = JSON.stringify({ schema: 'linescreen/preset', version: 1, name: 'Before ink', params });
   const { params: loaded } = parsePreset(json);
   assert.equal(loaded.inkEnabled, false);
   assert.equal(loaded.inkColor, '#000000');
@@ -285,9 +300,9 @@ test('normalizeFilterParams normalizes ink colors and clamps the ink threshold',
 
 test('parsePreset rejects invalid name (empty, too long)', () => {
   const params = Object.fromEntries(CONTROL_DEFINITIONS.map((d) => [d.key, d.defaultValue]));
-  let json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: '', params });
+  let json = JSON.stringify({ schema: 'linescreen/preset', version: 1, name: '', params });
   assert.throws(() => parsePreset(json), /Invalid name/);
-  json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: 'a'.repeat(65), params });
+  json = JSON.stringify({ schema: 'linescreen/preset', version: 1, name: 'a'.repeat(65), params });
   assert.throws(() => parsePreset(json), /Invalid name/);
 });
 
@@ -296,7 +311,7 @@ test('parsePreset rejects malformed JSON', () => {
 });
 
 test('parsePreset rejects missing params', () => {
-  const json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: 'Test' });
+  const json = JSON.stringify({ schema: 'linescreen/preset', version: 1, name: 'Test' });
   assert.throws(() => parsePreset(json), /Missing params/);
 });
 
@@ -304,7 +319,7 @@ test('parsePreset applies normalization on parse', () => {
   const params = Object.fromEntries(CONTROL_DEFINITIONS.map((d) => [d.key, d.defaultValue]));
   params.contrast = 999;
   params.posterization = -1;
-  const json = JSON.stringify({ schema: 'coarse-grid/preset', version: 1, name: 'Test', params });
+  const json = JSON.stringify({ schema: 'linescreen/preset', version: 1, name: 'Test', params });
   const parsed = parsePreset(json);
   assert.equal(parsed.params.contrast, 100);
   assert.equal(parsed.params.posterization, 0);

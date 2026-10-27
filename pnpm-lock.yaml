@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@voyager-fm/coarse-grid-core':
+      '@voyager-fm/linescreen-core':
         specifier: workspace:*
         version: link:packages/core
       class-variance-authority:

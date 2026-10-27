@@ -121,7 +121,8 @@ export type ControlDefinition = RangeControlDefinition | ToggleControlDefinition
 
 /** A serialized preset file (canonical schema/version envelope). */
 export interface PresetFile {
-  readonly schema: 'coarse-grid/preset';
+  /** Canonical marker since the Linescreen rename; `'coarse-grid/preset'` files remain readable. */
+  readonly schema: 'linescreen/preset' | 'coarse-grid/preset';
   readonly version: 1;
   readonly name: string;
   readonly params: FilterParams;
@@ -469,7 +470,9 @@ export function flipRowsInPlace(bytes: Uint8Array, width: number, height: number
 
 // --- Preset system ---
 
-export const PRESET_STORAGE_KEY = 'coarse-grid.presets.v1';
+export const PRESET_STORAGE_KEY = 'linescreen.presets.v1';
+/** Storage prefix used before the Linescreen rename; read once during migration, never written. */
+export const LEGACY_PRESET_STORAGE_KEY = 'coarse-grid.presets.v1';
 const VALID_KEYS: ReadonlySet<string> = new Set(CONTROL_DEFINITIONS.map((definition) => definition.key));
 /** Keys added after preset version 1 shipped: presets saved before them omit them and load with the defaults (ink off). */
 const KEYS_ADDED_AFTER_V1: ReadonlySet<string> = new Set(['inkEnabled', 'inkColor', 'inkFieldColor', 'inkThreshold', 'inkShadowThreshold']);
@@ -481,7 +484,7 @@ export function sanitizePresetName(name: string): string {
 }
 
 export function presetFilename(name: string): string {
-  return `${sanitizePresetName(name)}.coarse-grid-preset.json`;
+  return `${sanitizePresetName(name)}.linescreen-preset.json`;
 }
 
 export function parsePreset(json: string): ParsedPreset {
@@ -493,7 +496,7 @@ export function parsePreset(json: string): ParsedPreset {
   } catch {
     throw new Error('Invalid JSON');
   }
-  if (parsed.schema !== 'coarse-grid/preset') {
+  if (parsed.schema !== 'linescreen/preset' && parsed.schema !== 'coarse-grid/preset') {
     throw new Error('Invalid schema');
   }
   if (parsed.version !== 1) {
@@ -523,7 +526,7 @@ export function parsePreset(json: string): ParsedPreset {
 export function serializePreset(name: string, params: Record<string, unknown>): string {
   const normalized = normalizeFilterParams(params);
   const preset = {
-    schema: 'coarse-grid/preset',
+    schema: 'linescreen/preset',
     version: 1,
     name: String(name).trim(),
     params: Object.fromEntries(CONTROL_DEFINITIONS.map((d): [FilterParamKey, number | boolean | string] => [d.key, normalized[d.key]])),

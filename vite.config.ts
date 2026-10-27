@@ -9,7 +9,7 @@ import tailwindcss from '@tailwindcss/vite';
 // don't disturb the vanilla dist output — they simply prepare the pipeline
 // for the React cutover.
 export default defineConfig({
-  // GitHub Pages serves under /coarse-grid/ (set via VITE_BASE in
+  // GitHub Pages serves under /linescreen/ (set via VITE_BASE in
   // .github/workflows/pages.yml); the default build stays root-relative so
   // the Playwright preview contract (baseURL http://127.0.0.1:4173) holds.
   base: process.env.VITE_BASE ?? '/',

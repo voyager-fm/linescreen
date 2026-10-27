@@ -1,5 +1,5 @@
 /**
- * index.ts — public entry of @voyager-fm/coarse-grid-core
+ * index.ts — public entry of @voyager-fm/linescreen-core
  *
  * Runtime surface is IDENTICAL to the pre-TypeScript entry (same symbols, same
  * aliases, including the `createRasterFilter` alias of `createGpuFilter`); the
@@ -54,7 +54,7 @@ export type {
 export type { EditHistoryStep, EditHistoryAPI } from './edit-history.ts';
 
 // Preset store.
-export type { PresetStorage, PresetMutationResult, PresetLoadResult, SavePresetOptions } from './preset-store.ts';
+export type { PresetStorage, PresetMigrationStorage, PresetMutationResult, PresetLoadResult, SavePresetOptions } from './preset-store.ts';
 
 // GPU renderer: error-code union plus option/handle types.
 export type {

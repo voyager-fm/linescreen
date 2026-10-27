@@ -1,6 +1,6 @@
 import { useState, type KeyboardEvent } from 'react';
 
-import { CONTROL_DEFINITIONS } from '@voyager-fm/coarse-grid-core';
+import { CONTROL_DEFINITIONS } from '@voyager-fm/linescreen-core';
 
 import ControlRow from '@/components/ControlRow';
 import { TooltipProvider } from '@/components/ui/tooltip';

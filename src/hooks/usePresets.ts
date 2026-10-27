@@ -6,8 +6,9 @@ import {
   importPresetJson as coreImportPresetJson,
   listPresets as coreListPresets,
   loadPreset as coreLoadPreset,
+  migrateLegacyPresetStorage as coreMigrateLegacyPresetStorage,
   savePreset as coreSavePreset,
-} from '@voyager-fm/coarse-grid-core';
+} from '@voyager-fm/linescreen-core';
 
 import type { FilterParams } from '@/hooks/useFilterEditor';
 
@@ -52,14 +53,19 @@ export interface UsePresetsResult {
 }
 
 /**
- * React wrapper around `@voyager-fm/coarse-grid-core` preset-store. All preset-store
+ * React wrapper around `@voyager-fm/linescreen-core` preset-store. All preset-store
  * functions already swallow storage failures and return `{ok:false,error}`
  * (or `[]` for list) — this hook surfaces those as a recoverable English
  * status the PresetsPanel renders into `#preset-status`. It does NOT auto-apply
  * presets on load and does NOT persist any view state.
  */
 export function usePresets(): UsePresetsResult {
-  const [names, setNames] = useState<string[]>(() => coreListPresets());
+  // One-time Linescreen storage rename: run before the first list so presets
+  // saved under the legacy coarse-grid keys are visible immediately.
+  const [names, setNames] = useState<string[]>(() => {
+    coreMigrateLegacyPresetStorage();
+    return coreListPresets();
+  });
 
   const refresh = useCallback(() => {
     setNames(coreListPresets());

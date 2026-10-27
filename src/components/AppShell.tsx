@@ -2,13 +2,20 @@ import { Moon, Sun } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-export const THEME_STORAGE_KEY = 'coarse-grid.theme';
+export const THEME_STORAGE_KEY = 'linescreen.theme';
+const LEGACY_THEME_STORAGE_KEY = 'coarse-grid.theme';
 
 export type Theme = 'light' | 'dark';
 
 /** Read the persisted theme; never throws even if localStorage is blocked. */
 export function readStoredTheme(): Theme {
   try {
+    // One-time Linescreen storage rename: move the legacy value, then drop the old key.
+    const legacy = window.localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+    if (legacy !== null) {
+      if (window.localStorage.getItem(THEME_STORAGE_KEY) === null) window.localStorage.setItem(THEME_STORAGE_KEY, legacy);
+      window.localStorage.removeItem(LEGACY_THEME_STORAGE_KEY);
+    }
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
     return stored === 'dark' ? 'dark' : 'light';
   } catch {
@@ -44,7 +51,7 @@ export default function AppShell({ theme, onToggleTheme, children }: AppShellPro
       <header className="border-b border-border">
         <div className="mx-auto flex w-full max-w-[78rem] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Coarse Grid</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Linescreen</h1>
             <p className="mt-1 max-w-[48rem] text-sm text-muted-foreground">
               Apply the raster filter on your GPU in linear light and export
               composited PNGs — fully local, nothing uploaded.
