@@ -6,7 +6,6 @@ import {
   importPresetJson as coreImportPresetJson,
   listPresets as coreListPresets,
   loadPreset as coreLoadPreset,
-  migrateLegacyPresetStorage as coreMigrateLegacyPresetStorage,
   savePreset as coreSavePreset,
 } from '@voyager-fm/linescreen-core';
 
@@ -60,12 +59,7 @@ export interface UsePresetsResult {
  * presets on load and does NOT persist any view state.
  */
 export function usePresets(): UsePresetsResult {
-  // One-time Linescreen storage rename: run before the first list so presets
-  // saved under the legacy coarse-grid keys are visible immediately.
-  const [names, setNames] = useState<string[]>(() => {
-    coreMigrateLegacyPresetStorage();
-    return coreListPresets();
-  });
+  const [names, setNames] = useState<string[]>(() => coreListPresets());
 
   const refresh = useCallback(() => {
     setNames(coreListPresets());

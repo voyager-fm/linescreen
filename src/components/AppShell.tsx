@@ -3,19 +3,12 @@ import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const THEME_STORAGE_KEY = 'linescreen.theme';
-const LEGACY_THEME_STORAGE_KEY = 'coarse-grid.theme';
 
 export type Theme = 'light' | 'dark';
 
 /** Read the persisted theme; never throws even if localStorage is blocked. */
 export function readStoredTheme(): Theme {
   try {
-    // One-time Linescreen storage rename: move the legacy value, then drop the old key.
-    const legacy = window.localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
-    if (legacy !== null) {
-      if (window.localStorage.getItem(THEME_STORAGE_KEY) === null) window.localStorage.setItem(THEME_STORAGE_KEY, legacy);
-      window.localStorage.removeItem(LEGACY_THEME_STORAGE_KEY);
-    }
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
     return stored === 'dark' ? 'dark' : 'light';
   } catch {

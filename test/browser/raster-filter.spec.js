@@ -1039,44 +1039,6 @@ test('rejects export scales that exceed the 8MP product limit', async ({ page })
     expect(stored).toEqual([]);
   });
 
-  test('migrates presets saved under the legacy coarse-grid storage keys on first load', async ({ page }) => {
-    await page.evaluate(() => localStorage.clear());
-    await upload(page, createSmallValidUpload());
-
-    // Save one preset through the product flow with a recognizable value.
-    await setRange(page, 'posterization', '0.5');
-    await page.locator('#preset-save-btn').click();
-    await page.locator('#preset-save-name').fill('legacy preset');
-    await page.locator('#preset-save-confirm-btn').click();
-    await expect(page.locator('#preset-list')).toContainText('legacy preset');
-
-    // Relabel every stored key as legacy-only, reproducing a browser that
-    // only knows the coarse-grid app, then reload.
-    await page.evaluate(() => {
-      const legacyIndex = 'coarse-grid.presets.v1';
-      const newIndex = 'linescreen.presets.v1';
-      for (const key of Object.keys(localStorage)) {
-        if (key === newIndex) localStorage.setItem(legacyIndex, localStorage.getItem(key));
-        else if (key.startsWith(newIndex + '.')) localStorage.setItem(legacyIndex + key.slice(newIndex.length), localStorage.getItem(key));
-        else continue;
-        localStorage.removeItem(key);
-      }
-    });
-    await page.reload();
-
-    // The preset survives under the new keys, the legacy keys are gone, and
-    // loading the migrated preset still applies its saved parameters.
-    await expect(page.locator('#preset-list')).toContainText('legacy preset');
-    const stored = await page.evaluate(() => Object.keys(localStorage));
-    expect(stored.some((k) => k.startsWith('linescreen.presets.v1'))).toBe(true);
-    expect(stored.filter((k) => k.startsWith('coarse-grid.presets.v1'))).toEqual([]);
-
-    await upload(page, createSmallValidUpload());
-    await setRange(page, 'posterization', '0.9');
-    await page.locator('#preset-list .preset-item-name').click();
-    await expect(control(page, 'posterization')).toHaveValue('0.5');
-  });
-
   test('toggles between original and result comparison', async ({ page }) => {
     await upload(page, createSmallValidUpload());
     const compareBtn = page.locator('#compare-btn');
